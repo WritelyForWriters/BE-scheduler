@@ -39,11 +39,11 @@ jobs:
 
     - name: Docker build & push to ECR (develop)
       if: github.ref == 'refs/heads/develop'
-      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev -f Dockerfile-dev --push .
+      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev -f Dockerfile --push .
 
     - name: Docker build & push to ECR (production)
       if: github.ref == 'refs/heads/main'
-      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod -f Dockerfile-prod --push .
+      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod -f Dockerfile --push .
 
     - name: Server Deploy (develop)
       if: github.ref == 'refs/heads/develop'
