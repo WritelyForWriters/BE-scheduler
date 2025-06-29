@@ -16,6 +16,9 @@ jobs:
         submodules: true
         token: ${{ secrets.GH_PAT }}
 
+    - name: Move .env files from scheduler to root
+      run: mv scheduler/.env* ./
+
     - name: Install pnpm
       uses: pnpm/action-setup@v4
 
@@ -61,7 +64,7 @@ jobs:
             "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
             "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:dev | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:dev",
             "docker pull ${{ secrets.ECR_REGISTRY_URI }}:dev",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler ${{ secrets.ECR_REGISTRY_URI }}:dev"
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=development ${{ secrets.ECR_REGISTRY_URI }}:dev"
           ]' \
           --comment "Deploying Docker container (develop)"
           
@@ -77,6 +80,6 @@ jobs:
             "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
             "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:prod | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:prod",
             "docker pull ${{ secrets.ECR_REGISTRY_URI }}:prod",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler ${{ secrets.ECR_REGISTRY_URI }}:prod"
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=production ${{ secrets.ECR_REGISTRY_URI }}:prod"
           ]' \
           --comment "Deploying Docker container (production)"
