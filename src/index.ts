@@ -23,13 +23,14 @@ console.error = (...args: unknown[]) => {
 };
 
 // business logics
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   console.log("task 'reset writing streak' started.");
   try {
     const memberIds = await memberDao.getAllIds();
     for (const memberId of memberIds) {
       const wasModifiedYesterday = !!(await productHistoryDao.getOne({ memberId, date: dayjs().subtract(-1, "day") }));
       if (!wasModifiedYesterday) {
+        console.log(`target member: ${memberId}`);
         amplitude.setWritingStreak(memberId, 0);
       }
     }
