@@ -1,13 +1,13 @@
 import { pool } from "../core/db";
 
-export interface Member {
+export type Member = {
   id: string;
   email: string;
   nickname: string;
   profile_image?: string;
   created_at: string;
   updated_at: string;
-}
+};
 
 const getAllIds = async () => {
   const result = await pool.query<Pick<Member, "id">>(`

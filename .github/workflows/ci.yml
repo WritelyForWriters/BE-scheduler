@@ -1,0 +1,78 @@
+name: CI
+on:
+  push:
+    branches: [ "develop", "main" ]
+
+env:
+  node_version: 20
+
+jobs:
+  build:
+    runs-on: datau-runner
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Use Node.js ${{ env.node_version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.node_version }}
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Build
+      run: pnpm run build
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}
+
+    - name: Docker build & push to ECR (develop)
+      if: github.ref == 'refs/heads/develop'
+      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER_FOR_SCHEDULER }}:dev -f Dockerfile-dev --push .
+
+    - name: Docker build & push to ECR (production)
+      if: github.ref == 'refs/heads/main'
+      run: docker build -t ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod -f Dockerfile-prod --push .
+
+    - name: Server Deploy (develop)
+      if: github.ref == 'refs/heads/develop'
+      run: |
+        aws ssm send-command \
+          --document-name "AWS-RunShellScript" \
+          --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+          --parameters commands='[
+            "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}",
+            "cd /root",
+            "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
+            "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev",
+            "docker pull ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev",
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:dev"
+          ]' \
+          --comment "Deploying Docker container (develop)"
+          
+    - name: Server Deploy (production)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        aws ssm send-command \
+          --document-name "AWS-RunShellScript" \
+          --instance-ids "${{ secrets.EC2_INSTANCE_ID_PROD }}" \
+          --parameters commands='[
+            "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}",
+            "cd /root",
+            "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
+            "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod",
+            "docker pull ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod",
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler ${{ secrets.ECR_REGISTRY_URI_SCHEDULER }}:prod"
+          ]' \
+          --comment "Deploying Docker container (production)"
