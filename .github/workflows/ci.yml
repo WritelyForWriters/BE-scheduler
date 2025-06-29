@@ -17,7 +17,7 @@ jobs:
         token: ${{ secrets.GH_PAT }}
 
     - name: Move .env files from scheduler to root
-      run: mv scheduler/.env* ./
+      run: mv BE-secret/scheduler/.env* ./
 
     - name: Install pnpm
       uses: pnpm/action-setup@v4
