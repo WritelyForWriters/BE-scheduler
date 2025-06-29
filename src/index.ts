@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-dotenv.config();
+const envFile = !process.env.NODE_ENV ? ".env" : process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
+dotenv.config({ path: envFile });
 
 import cron from "node-cron";
 import memberDao from "./dao/member.dao";
