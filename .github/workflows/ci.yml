@@ -7,7 +7,6 @@ env:
   NODE_VERSION: 20
   NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
   IMAGE_TAG: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-  IMAGE_URI: ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}
   INSTANCE_ID: ${{ github.ref == 'refs/heads/main' && secrets.EC2_INSTANCE_ID_PROD || secrets.EC2_INSTANCE_ID }}
 
 jobs:
@@ -51,7 +50,7 @@ jobs:
       run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI }}
 
     - name: Docker build & push to ECR
-      run: docker build -t ${{ env.IMAGE_URI }} -f Dockerfile --push .
+      run: docker build -t ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }} -f Dockerfile --push .
 
     - name: Server Deploy
       run: |
@@ -62,9 +61,9 @@ jobs:
             "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI }}",
             "cd /root",
             "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
-            "[ $(docker images -q ${{ env.IMAGE_URI }} | wc -l) -gt 0 ] && docker rmi ${{ env.IMAGE_URI }}",
+            "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }} | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}",
             "docker pull ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=${{ env.NODE_ENV }} ${{ env.IMAGE_URI }}"
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=${{ env.NODE_ENV }} ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}"
           ]' \
           --comment "Deploying Docker container"
           
