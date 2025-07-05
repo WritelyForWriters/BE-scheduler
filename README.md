@@ -1,11 +1,1 @@
-## NOTE
-Set the following variables in your `.env` file:
-```
-PG_HOST=yourHost
-PG_PORT=5432
-PG_USER=postgres
-PG_PASSWORD=yourPassword
-PG_DATABASE=yourDatabase
-
-AMPLI_API_KEY=yourAmplitudeKey
-```
+BE-Scheduler
