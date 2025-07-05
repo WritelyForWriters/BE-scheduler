@@ -9,6 +9,14 @@ export type Member = {
   updated_at: string;
 };
 
+const getAll = async () => {
+  const result = await pool.query<Member>(`
+    SELECT *
+    FROM member
+  `);
+  return result.rows;
+};
+
 const getAllIds = async () => {
   const result = await pool.query<Pick<Member, "id">>(`
     SELECT id
@@ -17,4 +25,4 @@ const getAllIds = async () => {
   return result.rows.map(({ id }) => id);
 };
 
-export default { getAllIds };
+export default { getAll, getAllIds };
