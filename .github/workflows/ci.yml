@@ -4,8 +4,11 @@ on:
     branches: [ "develop", "main" ]
 
 env:
-  node_version: 20
-  image_tag: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  NODE_VERSION: 20
+  NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+  IMAGE_TAG: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  IMAGE_URI: ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}
+  INSTANCE_ID: ${{ github.ref == 'refs/heads/main' && secrets.EC2_INSTANCE_ID_PROD || secrets.EC2_INSTANCE_ID }}
 
 jobs:
   build:
@@ -25,10 +28,10 @@ jobs:
     - name: Install pnpm
       uses: pnpm/action-setup@v4
 
-    - name: Use Node.js ${{ env.node_version }}
+    - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.node_version }}
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'pnpm'
 
     - name: Install dependencies
@@ -47,42 +50,21 @@ jobs:
     - name: Login to Amazon ECR
       run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI }}
 
-    - name: Docker build & push to ECR (develop)
-      if: github.ref == 'refs/heads/develop'
-      run: docker build -t ${{ secrets.ECR_REGISTRY_URI }}:${{ env.image_tag }} -f Dockerfile --push .
+    - name: Docker build & push to ECR
+      run: docker build -t ${{ env.IMAGE_URI }} -f Dockerfile --push .
 
-    - name: Docker build & push to ECR (production)
-      if: github.ref == 'refs/heads/main'
-      run: docker build -t ${{ secrets.ECR_REGISTRY_URI }}:prod -f Dockerfile --push .
-
-    - name: Server Deploy (develop)
-      if: github.ref == 'refs/heads/develop'
+    - name: Server Deploy
       run: |
         aws ssm send-command \
           --document-name "AWS-RunShellScript" \
-          --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
           --parameters commands='[
             "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI }}",
             "cd /root",
             "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
-            "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:${{ env.image_tag }} | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:${{ env.image_tag }}",
-            "docker pull ${{ secrets.ECR_REGISTRY_URI }}:${{ env.image_tag }}",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=development ${{ secrets.ECR_REGISTRY_URI }}:${{ env.image_tag }}"
+            "[ $(docker images -q ${{ env.IMAGE_URI }} | wc -l) -gt 0 ] && docker rmi ${{ env.IMAGE_URI }}",
+            "docker pull ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}",
+            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=${{ env.NODE_ENV }} ${{ env.IMAGE_URI }}"
           ]' \
-          --comment "Deploying Docker container (develop)"
+          --comment "Deploying Docker container"
           
-    - name: Server Deploy (production)
-      if: github.ref == 'refs/heads/main'
-      run: |
-        aws ssm send-command \
-          --document-name "AWS-RunShellScript" \
-          --instance-ids "${{ secrets.EC2_INSTANCE_ID_PROD }}" \
-          --parameters commands='[
-            "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_URI }}",
-            "cd /root",
-            "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
-            "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:prod | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:prod",
-            "docker pull ${{ secrets.ECR_REGISTRY_URI }}:prod",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=production ${{ secrets.ECR_REGISTRY_URI }}:prod"
-          ]' \
-          --comment "Deploying Docker container (production)"
