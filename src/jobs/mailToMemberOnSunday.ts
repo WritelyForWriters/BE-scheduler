@@ -14,6 +14,8 @@ export default async () => {
         <br>모처럼 찾아온 쉬는 시간을 소중한 작품에 투자해보세요.
         <br>혹시 몰라요 - 시간이 충분한 오늘, 충분한 영감이 찾아올지! 
         <br>👉 <a href=${process.env.SERVICE_URL}>[700자 집필 시작하기]</a>
+        <br>
+        <br>※ 수신거부를 원하시면 메일 답장으로 문의 부탁드립니다.
         `.trim(),
       });
       console.log(`mail sent to ${member.email}`);

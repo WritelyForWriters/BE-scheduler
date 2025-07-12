@@ -14,6 +14,8 @@ export default async () => {
         <br><b>매일 잠깐이나마</b> ‘자유 쓰기’를 실천하면, 일상 속 작은 아이디어에서 멋진 작품을 발굴할 수도 있어요.
         <br>까짓것 10분만, 아무 글이나 써볼까요?
         <br>👉 <a href=${process.env.SERVICE_URL}>[지금 10분 자유 쓰기 시작하기]</a>
+        <br>
+        <br>※ 수신거부를 원하시면 메일 답장으로 문의 부탁드립니다.
         `.trim(),
       });
       console.log(`mail sent to ${email}`);
@@ -36,6 +38,8 @@ export default async () => {
         <br>오늘은 그냥 떠오르는 생각을 한 문단 써보는 것부터 시작해 보세요.
         <br>멋진 이야기는 그렇게 조용히 시작되기도 하니까요.
         <br>👉 <a href=${process.env.SERVICE_URL}>[지금 10분 자유 쓰기 시작하기]</a>
+        <br>
+        <br>※ 수신거부를 원하시면 메일 답장으로 문의 부탁드립니다.
         `.trim(),
       });
       console.log(`mail sent to ${email}`);
