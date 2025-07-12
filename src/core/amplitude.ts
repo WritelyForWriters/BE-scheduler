@@ -15,5 +15,3 @@ export const setWritingStreak = (userId: string, num: number) => {
   const identifyObj = new Identify().set("writing_streak", num);
   instance.identify(identifyObj, { user_id: userId });
 };
-
-export default { instance, setWritingStreak };

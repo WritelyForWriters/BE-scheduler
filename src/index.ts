@@ -11,16 +11,12 @@ import jobs from "./jobs";
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
-console.log = (...args: unknown[]) => {
-  originalLog(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
-console.warn = (...args: unknown[]) => {
-  originalWarn(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
-console.error = (...args: unknown[]) => {
-  originalError(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
+console.log = (...args: unknown[]) => originalLog(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
+console.warn = (...args: unknown[]) => originalWarn(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
+console.error = (...args: unknown[]) => originalError(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
 
 // schedules
 cron.schedule("0 0 * * *", withLogging("resetWritingStreak", jobs.resetWritingStreak));
-cron.schedule("0 11 * * 0", withLogging("sendMailOnSunday", jobs.sendMailOnSunday));
+cron.schedule("0 11 * * 0", withLogging("mailToAllMemberOnSunday", jobs.mailToMemberOnSunday));
+cron.schedule("0 13 * * *", withLogging("mailToMemberWithoutWorks", jobs.mailToMemberWithoutWorks));
+cron.schedule("0 14 * * *", withLogging("mailToMemberWithWorks", jobs.mailToMemberWithWorks));

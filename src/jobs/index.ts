@@ -1,4 +1,11 @@
-import { resetWritingStreak } from "./resetWritingStreak";
-import { sendMailOnSunday } from "./sendMailOnSunday";
+import resetWritingStreak from "./resetWritingStreak";
+import mailToMemberOnSunday from "./mailToMemberOnSunday";
+import mailToMemberWithWorks from "./mailToMemberWithWorks";
+import mailToMemberWithoutWorks from "./mailToMemberWithoutWorks";
 
-export default { resetWritingStreak, sendMailOnSunday };
+export default {
+  mailToMemberOnSunday,
+  resetWritingStreak,
+  mailToMemberWithoutWorks,
+  mailToMemberWithWorks,
+};

@@ -1,8 +1,8 @@
 import mail from "../core/mail";
-import memberDao from "../dao/member.dao";
+import * as memberDao from "../dao/member.dao";
 
-export const sendMailOnSunday = async () => {
-  const members = await memberDao.getAll();
+export default async () => {
+  const members = await memberDao.getMembers({ shouldMarketingAgreed: true });
   for (const member of members) {
     try {
       await mail.send({

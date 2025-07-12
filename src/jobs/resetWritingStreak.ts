@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
-import amplitude from "../core/amplitude";
-import memberDao from "../dao/member.dao";
+import * as amplitude from "../core/amplitude";
+import * as memberDao from "../dao/member.dao";
 import productHistoryDao from "../dao/productHistory.dao";
 
-export const resetWritingStreak = async () => {
-  const memberIds = await memberDao.getAllIds();
+export default async () => {
+  const memberIds = await memberDao.getMemberIds();
   for (const memberId of memberIds) {
     const wasModifiedYesterday = !!(await productHistoryDao.getOne({ memberId, date: dayjs().subtract(-1, "day") }));
     if (!wasModifiedYesterday) {
