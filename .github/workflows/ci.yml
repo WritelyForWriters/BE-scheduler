@@ -63,7 +63,7 @@ jobs:
             "[ $(docker ps --filter 'publish=1024' -q | wc -l) -gt 0 ] && docker stop $(docker ps --filter 'publish=1024' -q)",
             "[ $(docker images -q ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }} | wc -l) -gt 0 ] && docker rmi ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}",
             "docker pull ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}",
-            "docker run --rm -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=${{ env.NODE_ENV }} ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}"
+            "docker run -d -p 1024:1024 --name writely-scheduler -e NODE_ENV=${{ env.NODE_ENV }} ${{ secrets.ECR_REGISTRY_URI }}:${{ env.IMAGE_TAG }}"
           ]' \
           --comment "Deploying Docker container"
           
