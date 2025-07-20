@@ -46,8 +46,9 @@ export const getMembersWithoutWorks = async ({ shouldMarketingAgreed, lastActive
 };
 
 export const getMembersWithWorks = async ({ shouldMarketingAgreed, lastActiveBeforeDays }: CommonParam & { lastActiveBeforeDays: number }) => {
-  const result = await pool.query<Member>(`
-    SELECT *
+  const result = await pool.query<Member & { title?: string }>(`
+    SELECT m.*,
+      (SELECT p.title FROM product p WHERE p.created_by = m.id ORDER BY updated_at DESC LIMIT 1) AS title
     FROM member m
     WHERE DATE(m.last_token_issued_at) = '${dayjs().subtract(lastActiveBeforeDays, "day").format("YYYY-MM-DD")}'
       AND EXISTS ( SELECT 1 FROM product p WHERE p.created_by = m.id )

@@ -3,8 +3,8 @@ import * as mail from "../core/mail";
 
 export default async () => {
   // 2일 경과
-  const members2dayInactiavted = await memberDao.getMembersWithoutWorks({ shouldMarketingAgreed: true, lastActiveBeforeDays: 2 });
-  for (const { email, nickname } of members2dayInactiavted) {
+  const members2dayInactivated = await memberDao.getMembersWithoutWorks({ shouldMarketingAgreed: true, lastActiveBeforeDays: 2 });
+  for (const { email, nickname } of members2dayInactivated) {
     try {
       await mail.send({
         receivers: [email],
@@ -15,7 +15,7 @@ export default async () => {
         <br>까짓것 10분만, 아무 글이나 써볼까요?
         <br>👉 <a href=${process.env.SERVICE_URL}>[지금 10분 자유 쓰기 시작하기]</a>
         <br>
-        <br>※ 수신거부를 원하시면 메일 답장으로 문의 부탁드립니다.
+        <br>광고 메일을 수신하고 싶지 않을 시, ‘동의 철회’라고 답장해주시면 마케팅 메시지 수신 동의가 철회됩니다.
         `.trim(),
       });
       console.log(`mail sent to ${email}`);
@@ -24,8 +24,8 @@ export default async () => {
     }
   }
   // 4일 경과
-  const members4dayInactiavted = await memberDao.getMembersWithoutWorks({ shouldMarketingAgreed: true, lastActiveBeforeDays: 4 });
-  for (const { email, nickname } of members4dayInactiavted) {
+  const members4dayInactivated = await memberDao.getMembersWithoutWorks({ shouldMarketingAgreed: true, lastActiveBeforeDays: 4 });
+  for (const { email, nickname } of members4dayInactivated) {
     try {
       await mail.send({
         receivers: [email],
@@ -38,8 +38,7 @@ export default async () => {
         <br>오늘은 그냥 떠오르는 생각을 한 문단 써보는 것부터 시작해 보세요.
         <br>멋진 이야기는 그렇게 조용히 시작되기도 하니까요.
         <br>👉 <a href=${process.env.SERVICE_URL}>[지금 10분 자유 쓰기 시작하기]</a>
-        <br>
-        <br>※ 수신거부를 원하시면 메일 답장으로 문의 부탁드립니다.
+        <br>광고 메일을 수신하고 싶지 않을 시, ‘동의 철회’라고 답장해주시면 마케팅 메시지 수신 동의가 철회됩니다.
         `.trim(),
       });
       console.log(`mail sent to ${email}`);
