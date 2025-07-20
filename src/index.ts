@@ -3,38 +3,20 @@ const envFile = !process.env.NODE_ENV ? ".env" : process.env.NODE_ENV === "produ
 dotenv.config({ path: envFile });
 
 import cron from "node-cron";
-import memberDao from "./dao/member.dao";
-import productHistoryDao from "./dao/productHistory.dao";
 import dayjs from "dayjs";
-import amplitude from "./core/amplitude";
+import { withLogging } from "./utils/withLogging";
+import jobs from "./jobs";
 
 // override logger
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
-console.log = (...args: unknown[]) => {
-  originalLog(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
-console.warn = (...args: unknown[]) => {
-  originalWarn(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
-console.error = (...args: unknown[]) => {
-  originalError(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
-};
+console.log = (...args: unknown[]) => originalLog(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
+console.warn = (...args: unknown[]) => originalWarn(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
+console.error = (...args: unknown[]) => originalError(`[${dayjs().format("YYYY-MM-DD HH:mm:ss")}]`, ...args);
 
-// business logics
-cron.schedule("0 0 * * *", async () => {
-  console.log("task 'reset writing streak' started.");
-  try {
-    const memberIds = await memberDao.getAllIds();
-    for (const memberId of memberIds) {
-      const wasModifiedYesterday = !!(await productHistoryDao.getOne({ memberId, date: dayjs().subtract(-1, "day") }));
-      if (!wasModifiedYesterday) {
-        console.log(`target member: ${memberId}`);
-        amplitude.setWritingStreak(memberId, 0);
-      }
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
+// schedules
+cron.schedule("0 0 * * *", withLogging("resetWritingStreak", jobs.resetWritingStreak));
+cron.schedule("0 11 * * 0", withLogging("mailToAllMemberOnSunday", jobs.mailToMemberOnSunday));
+cron.schedule("0 13 * * *", withLogging("mailToMemberWithoutWorks", jobs.mailToMemberWithoutWorks));
+cron.schedule("0 14 * * *", withLogging("mailToMemberWithWorks", jobs.mailToMemberWithWorks));
